@@ -1066,6 +1066,10 @@ MonoBehaviour:
   target: {fileID: 543450653259175915}
   offset: {x: 0, y: 4, z: -6}
   smoothSpeed: 20
+  collisionRadius: 0.3
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &332856813
 GameObject:
   m_ObjectHideFlags: 0
