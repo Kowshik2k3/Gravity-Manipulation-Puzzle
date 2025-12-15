@@ -999,14 +999,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 2, z: 1.79}
+  m_LocalRotation: {x: 0.0744501, y: -0, z: -0, w: 0.9972248}
+  m_LocalPosition: {x: 1.1, y: 2.27, z: -3.32}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 8.539, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1064,12 +1064,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 543450653259175915}
-  offset: {x: 0, y: 4, z: -6}
-  smoothSpeed: 20
+  offset: {x: 0, y: 2.27, z: -3.32}
+  smoothSpeed: 10
   collisionRadius: 0.3
   collisionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  fixedRotation: {x: 8.539, y: 0, z: 0}
 --- !u!1 &332856813
 GameObject:
   m_ObjectHideFlags: 0
@@ -5771,8 +5772,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1628940703}
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -1.641, y: 0, z: 0.17}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.641, y: 1.74, z: 0.17}
   m_LocalScale: {x: 1.3094, y: 1.3277316, z: 1.3094}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5787,7 +5788,7 @@ Transform:
   - {fileID: 452349476}
   m_Father: {fileID: 0}
   m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1645246335
 GameObject:
   m_ObjectHideFlags: 0
@@ -7397,6 +7398,7 @@ GameObject:
   - component: {fileID: 543450653259175915}
   - component: {fileID: 919132149603880276}
   - component: {fileID: 919132149603880275}
+  - component: {fileID: 919132149603880278}
   - component: {fileID: 919132149603880274}
   m_Layer: 0
   m_Name: Exo Gray
@@ -7447,7 +7449,7 @@ MonoBehaviour:
   jumpForce: 6
   gravity: -20
   groundCheckDistance: 0.2
-  rotationSpeed: 5
+  rotationSpeed: 10
   cameraTransform: {fileID: 330585546}
 --- !u!95 &919132149603880276
 Animator:
@@ -7470,6 +7472,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &919132149603880278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149603880273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe605c50e8e9b5941934cb209c23a0be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hologram: {fileID: 1628940704}
+  cameraTransform: {fileID: 330585546}
+  hologramDistance: 3
+  hologramHeightOffset: 1.2
 --- !u!1 &927016744737343624
 GameObject:
   m_ObjectHideFlags: 0

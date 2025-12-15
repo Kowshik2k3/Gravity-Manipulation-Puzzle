@@ -36,14 +36,20 @@ public class PlayerMovement : MonoBehaviour
         HandleMovement();
         HandleGravity();
         UpdateAnimator();
+
+
     }
 
     void HandleMovement()
     {
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
+        float x = 0f;
+        float z = 0f;
 
-        // Camera-relative directions
+        if (Input.GetKey(KeyCode.A)) x = -1f;
+        if (Input.GetKey(KeyCode.D)) x = 1f;
+        if (Input.GetKey(KeyCode.W)) z = 1f;
+        if (Input.GetKey(KeyCode.S)) z = -1f;
+
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
 
@@ -55,10 +61,7 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 move = (camForward * z + camRight * x).normalized;
 
-        // Move character
         controller.Move(move * moveSpeed * Time.deltaTime);
-
-        // Smooth rotation towards movement direction
         if (move.magnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(move);
@@ -69,12 +72,14 @@ public class PlayerMovement : MonoBehaviour
             );
         }
 
-        // Jump (works even in idle)
+
+
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
         {
             velocity.y = jumpForce;
         }
     }
+
 
     void HandleGravity()
     {
@@ -95,12 +100,18 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateAnimator()
     {
-        float speed = new Vector2(
-            Input.GetAxisRaw("Horizontal"),
-            Input.GetAxisRaw("Vertical")
-        ).magnitude;
+        float speed = 0f;
+
+        if (Input.GetKey(KeyCode.W) ||
+            Input.GetKey(KeyCode.A) ||
+            Input.GetKey(KeyCode.S) ||
+            Input.GetKey(KeyCode.D))
+        {
+            speed = 1f;
+        }
 
         animator.SetFloat("Speed", speed);
         animator.SetBool("IsGrounded", isGrounded);
     }
+
 }
