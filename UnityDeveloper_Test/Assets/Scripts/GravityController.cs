@@ -2,15 +2,49 @@ using UnityEngine;
 
 public class GravityController : MonoBehaviour
 {
-    public Transform hologram;
-    public Transform cameraTransform;
-    public float hologramDistance = 2f;
-
     [Header("Hologram")]
+    public Transform hologram;
+    public float hologramDistance = 2f;
     public float hologramHeightOffset = 1.2f;
+
+    [Header("Camera (Optional)")]
+    public Transform cameraTransform; // This will be auto-assigned
 
     private Vector3 selectedDirection;
     private bool hasSelection = false;
+
+    void Start()
+    {
+        // Try to find camera if not assigned
+        if (cameraTransform == null)
+        {
+            FindCamera();
+        }
+    }
+
+    void FindCamera()
+    {
+        // Look for SimpleFollowCamera
+        SimpleFollowCamera sfc = FindObjectOfType<SimpleFollowCamera>();
+        if (sfc != null)
+        {
+            cameraTransform = sfc.transform;
+            Debug.Log("GravityController: Found camera: " + sfc.gameObject.name);
+        }
+        else
+        {
+            // Fallback to main camera
+            cameraTransform = Camera.main?.transform;
+            if (cameraTransform != null)
+            {
+                Debug.Log("GravityController: Using Main Camera: " + cameraTransform.gameObject.name);
+            }
+            else
+            {
+                Debug.LogWarning("GravityController: No camera found. Arrow keys will use world directions.");
+            }
+        }
+    }
 
     void Update()
     {
@@ -44,6 +78,11 @@ public class GravityController : MonoBehaviour
 
     Vector3 GetCameraForward()
     {
+        if (cameraTransform == null)
+        {
+            return Vector3.forward; // Default world forward
+        }
+
         Vector3 forward = cameraTransform.forward;
         forward.y = 0f;
         return forward.normalized;
@@ -51,6 +90,11 @@ public class GravityController : MonoBehaviour
 
     Vector3 GetCameraRight()
     {
+        if (cameraTransform == null)
+        {
+            return Vector3.right; // Default world right
+        }
+
         Vector3 right = cameraTransform.right;
         right.y = 0f;
         return right.normalized;
@@ -72,7 +116,6 @@ public class GravityController : MonoBehaviour
         // Rotate hologram so feet face the wall, head toward player
         hologram.rotation = Quaternion.LookRotation(-selectedDirection, Vector3.up)
                       * Quaternion.Euler(90f, 0f, 0f);
-
     }
 
     public Vector3 GetSelectedGravityDirection()

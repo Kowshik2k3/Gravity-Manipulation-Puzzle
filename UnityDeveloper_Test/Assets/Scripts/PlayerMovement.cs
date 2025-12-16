@@ -15,19 +15,21 @@ public class PlayerMovement : MonoBehaviour
     [Header("Rotation")]
     public float rotationSpeed = 12f;
 
-    [Header("References")]
-    public Transform cameraTransform;
+    // REMOVED: public Transform cameraTransform; // We'll get this automatically
 
     private CharacterController controller;
     private Animator animator;
-
     private Vector3 velocity;
     private bool isGrounded;
+    private Transform cameraTransform;
 
     void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+
+        // Find camera automatically
+        FindCamera();
     }
 
     void Update()
@@ -36,8 +38,30 @@ public class PlayerMovement : MonoBehaviour
         HandleMovement();
         HandleGravity();
         UpdateAnimator();
+    }
 
-
+    void FindCamera()
+    {
+        // Look for SimpleFollowCamera or Main Camera
+        SimpleFollowCamera sfc = FindObjectOfType<SimpleFollowCamera>();
+        if (sfc != null)
+        {
+            cameraTransform = sfc.transform;
+            Debug.Log("Found SimpleFollowCamera: " + sfc.gameObject.name);
+        }
+        else
+        {
+            // Fallback to main camera
+            cameraTransform = Camera.main?.transform;
+            if (cameraTransform != null)
+            {
+                Debug.Log("Using Main Camera: " + cameraTransform.gameObject.name);
+            }
+            else
+            {
+                Debug.LogError("No camera found! Please add a SimpleFollowCamera or Main Camera to the scene.");
+            }
+        }
     }
 
     void HandleMovement()
@@ -50,18 +74,25 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.W)) z = 1f;
         if (Input.GetKey(KeyCode.S)) z = -1f;
 
+        // Get camera forward and right vectors
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
 
+        // Flatten camera vectors (remove Y component)
         camForward.y = 0f;
         camRight.y = 0f;
 
+        // Normalize to prevent faster diagonal movement
         camForward.Normalize();
         camRight.Normalize();
 
+        // Calculate movement direction relative to camera
         Vector3 move = (camForward * z + camRight * x).normalized;
 
+        // Move the character
         controller.Move(move * moveSpeed * Time.deltaTime);
+
+        // Rotate player to face movement direction
         if (move.magnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(move);
@@ -72,14 +103,12 @@ public class PlayerMovement : MonoBehaviour
             );
         }
 
-
-
+        // Jumping
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
         {
             velocity.y = jumpForce;
         }
     }
-
 
     void HandleGravity()
     {
@@ -113,5 +142,4 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Speed", speed);
         animator.SetBool("IsGrounded", isGrounded);
     }
-
-}
+}   
