@@ -1,3 +1,4 @@
+﻿/*
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -143,3 +144,188 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("IsGrounded", isGrounded);
     }
 }   
+*/
+using UnityEngine;
+
+[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Animator))]
+public class PlayerMovement : MonoBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 6f;
+
+    [Header("Gravity")]
+    public float gravityStrength = 30f;
+    public Vector3 gravityDirection = Vector3.down;
+
+    [Header("Rotation")]
+    public float rotationSpeed = 12f;
+
+    CharacterController controller;
+    Animator animator;
+
+    Vector3 velocity;
+    bool physicsGrounded;
+    bool animGrounded;
+    bool isFalling;
+
+    float groundedGraceTime = 0.15f;
+    float groundedGraceTimer;
+
+    void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        HandleGrounding();
+        UpdateCapsuleForGravity();
+        HandleMovement();
+        HandleGravity();
+        UpdateAnimator();
+    }
+
+
+    void HandleGrounding()
+    {
+        physicsGrounded = controller.isGrounded;
+
+        if (physicsGrounded)
+        {
+            groundedGraceTimer = groundedGraceTime;
+
+            controller.Move(gravityDirection * 0.05f);
+            velocity = Vector3.zero;
+
+            // ✅ CONFIRMED LANDING → STOP FALLING
+            isFalling = false;
+        }
+        else
+        {
+            groundedGraceTimer -= Time.deltaTime;
+        }
+
+        animGrounded = groundedGraceTimer > 0f;
+    }
+
+
+
+    void HandleMovement()
+    {
+        float x = 0f;
+        float z = 0f;
+
+        // ✅ ONLY WASD — NO ARROW KEYS
+        if (Input.GetKey(KeyCode.A)) x = -1f;
+        if (Input.GetKey(KeyCode.D)) x = 1f;
+        if (Input.GetKey(KeyCode.W)) z = 1f;
+        if (Input.GetKey(KeyCode.S)) z = -1f;
+
+        Vector3 up = -gravityDirection;
+        Vector3 right = Vector3.Cross(up, Vector3.forward).normalized;
+        Vector3 forward = Vector3.Cross(right, up).normalized;
+
+        Vector3 move = (right * x + forward * z).normalized;
+
+        controller.Move(move * moveSpeed * Time.deltaTime);
+
+        if (move.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(move, up);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRot,
+                rotationSpeed * Time.deltaTime
+            );
+        }
+
+        if (animGrounded && Input.GetKeyDown(KeyCode.Space))
+        {
+            velocity = -gravityDirection * jumpForce;
+            groundedGraceTimer = 0f;
+            StartFalling();
+        }
+
+    }
+    void StartFalling()
+    {
+        if (!isFalling)
+        {
+            isFalling = true;
+        }
+    }
+
+    void HandleGravity()
+    {
+        if (!physicsGrounded)
+        {
+
+            velocity += gravityDirection * gravityStrength * Time.deltaTime;
+            controller.Move(velocity * Time.deltaTime);
+        }
+
+    }
+
+
+
+    // 🔑 CALLED ONLY BY GravityController
+    public void ApplyGravity(Vector3 newGravity)
+    {
+        gravityDirection = newGravity.normalized;
+
+        Vector3 up = -gravityDirection;
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, up);
+
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.ProjectOnPlane(Vector3.forward, up);
+
+        transform.rotation = Quaternion.LookRotation(forward, up);
+
+        // 🔑 HARD RESET PHYSICS STATE
+        velocity = Vector3.zero;
+
+        // 🔑 FORCE LANDING GRACE
+        groundedGraceTimer = groundedGraceTime;
+        UpdateCapsuleForGravity();
+
+    }
+    void UpdateCapsuleForGravity()
+    {
+        // gravityDirection is normalized
+        Vector3 up = -gravityDirection;
+
+        // Capsule stays vertical, so we fake alignment by shifting center
+        float halfHeight = controller.height * 0.5f;
+
+        // Project gravity onto world Y
+        float verticalDot = Vector3.Dot(up, Vector3.up);
+
+        // When on ground → normal center
+        if (Mathf.Abs(verticalDot) > 0.9f)
+        {
+            controller.center = new Vector3(0f, halfHeight, 0f);
+        }
+        else
+        {
+            // On wall → push capsule outward from wall
+            Vector3 horizontal = new Vector3(up.x, 0f, up.z).normalized;
+            controller.center = horizontal * (controller.radius * 0.9f) + Vector3.up * halfHeight;
+        }
+    }
+
+
+    void UpdateAnimator()
+    {
+        animator.SetFloat(
+            "Speed",
+            controller.velocity.magnitude > 0.1f ? 1f : 0f
+        );
+
+        animator.SetBool("IsGrounded", animGrounded);
+        animator.SetBool("IsFalling", isFalling);
+    }
+
+}

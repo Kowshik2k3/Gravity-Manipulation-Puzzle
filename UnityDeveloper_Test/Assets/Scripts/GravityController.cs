@@ -1,7 +1,9 @@
+﻿/*
 using UnityEngine;
 
 public class GravityController : MonoBehaviour
 {
+    public PlayerMovement playerMovement;
     [Header("Hologram")]
     public Transform hologram;
     public float hologramDistance = 2f;
@@ -121,5 +123,220 @@ public class GravityController : MonoBehaviour
     public Vector3 GetSelectedGravityDirection()
     {
         return selectedDirection;
+    }
+
+    void ApplyGravity()
+    {
+        if (!playerMovement) return;
+
+        playerMovement.AlignToGravity(selectedDirection);
+
+        hasSelection = false;
+        if (hologram) hologram.gameObject.SetActive(false);
+    }
+
+}
+*/
+
+
+/*
+using UnityEngine;
+
+public class GravityController : MonoBehaviour
+{
+    public PlayerMovement player;
+    public Transform hologram;
+    public Transform cameraTransform;
+
+    public float hologramDistance = 2f;
+    public float hologramHeightOffset = 1.2f;
+
+    Vector3 selectedGravity;
+    bool hasSelection;
+
+    void Update()
+    {
+        ReadArrowInput();
+        UpdateHologram();
+
+        if (hasSelection && Input.GetKeyDown(KeyCode.Return))
+        {
+            ApplyGravity();
+        }
+    }
+
+    void ReadArrowInput()
+    {
+        hasSelection = true;
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+            selectedGravity = -cameraTransform.right;
+
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+            selectedGravity = cameraTransform.right;
+
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+            selectedGravity = cameraTransform.forward;
+
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+            selectedGravity = -cameraTransform.forward;
+
+        else
+            hasSelection = false;
+
+        if (hasSelection)
+        {
+            selectedGravity.y = 0f;
+            selectedGravity.Normalize();
+        }
+    }
+
+    void UpdateHologram()
+    {
+        if (!hologram || !hasSelection)
+        {
+            if (hologram) hologram.gameObject.SetActive(false);
+            return;
+        }
+
+        hologram.gameObject.SetActive(true);
+
+        hologram.position =
+            player.transform.position +
+            selectedGravity * hologramDistance +
+            Vector3.up * hologramHeightOffset;
+
+        hologram.rotation =
+            Quaternion.LookRotation(-selectedGravity, Vector3.up) *
+            Quaternion.Euler(90f, 0f, 0f);
+    }
+
+    void ApplyGravity()
+    {
+        if (!player) return;
+
+        player.ApplyGravity(selectedGravity);
+        hasSelection = false;
+
+        if (hologram)
+            hologram.gameObject.SetActive(false);
+    }
+}
+*/
+
+using UnityEngine;
+
+public class GravityController : MonoBehaviour
+{
+    public PlayerMovement player;
+    public Transform hologram;
+    public Transform cameraTransform;
+
+    [Header("Hologram Settings")]
+    public float hologramDistance = 2f;
+    public float hologramHeightOffset = 1.2f;
+    public float hologramVisibleTime = 5f; // ✅ 5 seconds
+
+    private Vector3 selectedGravity;
+    private bool hasSelection;
+
+    private float hologramTimer;
+
+    void Update()
+    {
+        ReadArrowInput();
+        UpdateHologramTimer();
+        UpdateHologramVisual();
+
+        if (hasSelection && Input.GetKeyDown(KeyCode.Return))
+        {
+            ApplyGravity();
+        }
+    }
+
+    // -------------------------
+    // INPUT (ARROW KEYS ONLY)
+    // -------------------------
+    void ReadArrowInput()
+    {
+        Vector3 newSelection = Vector3.zero;
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+            newSelection = -cameraTransform.right;
+
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+            newSelection = cameraTransform.right;
+
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+            newSelection = cameraTransform.forward;
+
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+            newSelection = -cameraTransform.forward;
+
+        if (newSelection != Vector3.zero)
+        {
+            newSelection.y = 0f;
+            selectedGravity = newSelection.normalized;
+
+            hasSelection = true;
+            hologramTimer = hologramVisibleTime; // ✅ reset timer
+        }
+    }
+
+    // -------------------------
+    // TIMER
+    // -------------------------
+    void UpdateHologramTimer()
+    {
+        if (!hasSelection) return;
+
+        hologramTimer -= Time.deltaTime;
+
+        if (hologramTimer <= 0f)
+        {
+            hasSelection = false;
+            if (hologram)
+                hologram.gameObject.SetActive(false);
+        }
+    }
+
+    // -------------------------
+    // HOLOGRAM VISUAL
+    // -------------------------
+    void UpdateHologramVisual()
+    {
+        if (!hologram || !hasSelection)
+        {
+            if (hologram)
+                hologram.gameObject.SetActive(false);
+            return;
+        }
+
+        hologram.gameObject.SetActive(true);
+
+        hologram.position =
+            player.transform.position +
+            selectedGravity * hologramDistance +
+            Vector3.up * hologramHeightOffset;
+
+        hologram.rotation =
+            Quaternion.LookRotation(-selectedGravity, Vector3.up) *
+            Quaternion.Euler(90f, 0f, 0f);
+    }
+
+    // -------------------------
+    // APPLY GRAVITY
+    // -------------------------
+    void ApplyGravity()
+    {
+        if (!player) return;
+
+        player.ApplyGravity(selectedGravity);
+
+        hasSelection = false;
+        hologramTimer = 0f;
+
+        if (hologram)
+            hologram.gameObject.SetActive(false);
     }
 }
