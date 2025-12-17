@@ -331,7 +331,7 @@ public class GravityController : MonoBehaviour
     {
         if (!player) return;
 
-        player.ApplyGravity(selectedGravity);
+        //player.ApplyGravity(selectedGravity);
 
         hasSelection = false;
         hologramTimer = 0f;

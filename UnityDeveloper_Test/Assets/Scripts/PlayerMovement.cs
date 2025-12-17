@@ -145,6 +145,7 @@ public class PlayerMovement : MonoBehaviour
     }
 }   
 */
+/*
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -169,6 +170,9 @@ public class PlayerMovement : MonoBehaviour
     bool physicsGrounded;
     bool animGrounded;
     bool isFalling;
+    bool hasMoveInput;
+    bool jumpRequested;
+    bool wasGroundedLastFrame;
 
     float groundedGraceTime = 0.15f;
     float groundedGraceTimer;
@@ -198,17 +202,23 @@ public class PlayerMovement : MonoBehaviour
             groundedGraceTimer = groundedGraceTime;
 
             controller.Move(gravityDirection * 0.05f);
-            velocity = Vector3.zero;
 
-            // ✅ CONFIRMED LANDING → STOP FALLING
-            isFalling = false;
+            // ✅ LANDING DETECTED (first grounded frame)
+            if (!wasGroundedLastFrame)
+            {
+                isFalling = false;
+                velocity = Vector3.zero;
+                jumpRequested = false;
+            }
         }
         else
         {
             groundedGraceTimer -= Time.deltaTime;
+            StartFalling();
         }
 
         animGrounded = groundedGraceTimer > 0f;
+        wasGroundedLastFrame = physicsGrounded;
     }
 
 
@@ -228,9 +238,15 @@ public class PlayerMovement : MonoBehaviour
         Vector3 right = Vector3.Cross(up, Vector3.forward).normalized;
         Vector3 forward = Vector3.Cross(right, up).normalized;
 
-        Vector3 move = (right * x + forward * z).normalized;
+        Vector3 move = (right * x + forward * z);
+        hasMoveInput = move.sqrMagnitude > 0.01f;
 
-        controller.Move(move * moveSpeed * Time.deltaTime);
+        if (hasMoveInput)
+        {
+            move.Normalize();
+            controller.Move(move * moveSpeed * Time.deltaTime);
+        }
+
 
         if (move.sqrMagnitude > 0.001f)
         {
@@ -246,8 +262,10 @@ public class PlayerMovement : MonoBehaviour
         {
             velocity = -gravityDirection * jumpForce;
             groundedGraceTimer = 0f;
+            jumpRequested = true;
             StartFalling();
         }
+
 
     }
     void StartFalling()
@@ -319,13 +337,97 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateAnimator()
     {
-        animator.SetFloat(
-            "Speed",
-            controller.velocity.magnitude > 0.1f ? 1f : 0f
-        );
-
+        animator.SetFloat("Speed", hasMoveInput ? 1f : 0f);
         animator.SetBool("IsGrounded", animGrounded);
         animator.SetBool("IsFalling", isFalling);
     }
 
+
+}
+
+*/
+
+using UnityEngine;
+
+[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Animator))]
+public class PlayerMovement : MonoBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 6f;
+    public float gravity = -20f;
+
+    [Header("Rotation")]
+    public float rotationSpeed = 12f;
+
+    CharacterController controller;
+    Animator animator;
+
+    Vector3 velocity;
+    bool isGrounded;
+    bool hasMoveInput;
+
+    void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        HandleGroundCheck();
+        HandleMovement();
+        HandleGravity();
+        UpdateAnimator();
+    }
+
+    void HandleGroundCheck()
+    {
+        isGrounded = controller.isGrounded;
+
+        if (isGrounded && velocity.y < 0f)
+        {
+            velocity.y = -2f; // stick to ground
+        }
+    }
+
+    void HandleMovement()
+    {
+        float x = Input.GetAxisRaw("Horizontal");
+        float z = Input.GetAxisRaw("Vertical");
+
+        Vector3 move = new Vector3(x, 0f, z);
+        hasMoveInput = move.sqrMagnitude > 0.01f;
+
+        if (hasMoveInput)
+        {
+            move.Normalize();
+            controller.Move(move * moveSpeed * Time.deltaTime);
+
+            Quaternion targetRot = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRot,
+                rotationSpeed * Time.deltaTime
+            );
+        }
+
+        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
+        {
+            velocity.y = jumpForce;
+        }
+    }
+
+    void HandleGravity()
+    {
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+    }
+
+    void UpdateAnimator()
+    {
+        animator.SetFloat("Speed", hasMoveInput ? 1f : 0f);
+        animator.SetBool("IsGrounded", isGrounded);
+    }
 }
