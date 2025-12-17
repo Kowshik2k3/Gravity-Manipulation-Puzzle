@@ -1104,8 +1104,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_LocalRotation: {x: 0.2585714, y: 1e-45, z: 0, w: 0.9659922}
-  m_LocalPosition: {x: 0.988327, y: 3.81, z: -2.83}
+  m_LocalRotation: {x: 0.2585714, y: 0, z: 0, w: 0.9659922}
+  m_LocalPosition: {x: 0.988327, y: 5.69, z: -2.83}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1713,8 +1713,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2051245381}
-  m_RootOrder: -1
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!114 &410087042
 MonoBehaviour:
@@ -4690,7 +4690,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1106371203
 GameObject:
@@ -6133,8 +6133,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2051245381}
-  m_RootOrder: -1
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!114 &1503525203
 MonoBehaviour:
@@ -7795,10 +7795,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 909295232}
-  - {fileID: 410087041}
-  - {fileID: 1503525202}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2101017235
 GameObject:
@@ -8236,7 +8234,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132149603880273}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.988327, y: 0.08, z: 0.17}
+  m_LocalPosition: {x: 0.988327, y: 1.96, z: 0.17}
   m_LocalScale: {x: 1.3094, y: 1.3277316, z: 1.3094}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8406,9 +8404,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 8
   jumpForce: 6
-  gravityStrength: 20
-  gravityDirection: {x: 0, y: -1, z: 0}
+  gravity: -20
   rotationSpeed: 10
+  cameraTransform: {fileID: 330585546}
 --- !u!95 &919132149603880276
 Animator:
   serializedVersion: 5
@@ -8442,12 +8440,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe605c50e8e9b5941934cb209c23a0be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 919132149603880275}
+  worldRoot: {fileID: 2051245381}
+  player: {fileID: 543450653259175915}
   hologram: {fileID: 1628940704}
-  cameraTransform: {fileID: 2038006763}
+  cameraTransform: {fileID: 330585546}
   hologramDistance: 3
   hologramHeightOffset: 1.2
   hologramVisibleTime: 5
+  rotationDuration: 0.5
 --- !u!1 &927016744737343624
 GameObject:
   m_ObjectHideFlags: 0

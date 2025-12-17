@@ -346,7 +346,7 @@ public class PlayerMovement : MonoBehaviour
 }
 
 */
-
+/*
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -356,17 +356,17 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float jumpForce = 6f;
-    public float gravity = -20f;
-
-    [Header("Rotation")]
+    public float gravity = -25f;
     public float rotationSpeed = 12f;
+
+    [Header("References")]
+    public Transform cameraTransform;
 
     CharacterController controller;
     Animator animator;
 
     Vector3 velocity;
     bool isGrounded;
-    bool hasMoveInput;
 
     void Awake()
     {
@@ -388,23 +388,144 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded && velocity.y < 0f)
         {
-            velocity.y = -2f; // stick to ground
+            velocity.y = -2f; // keep grounded
         }
     }
 
     void HandleMovement()
     {
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
+        float x = 0f;
+        float z = 0f;
 
-        Vector3 move = new Vector3(x, 0f, z);
-        hasMoveInput = move.sqrMagnitude > 0.01f;
+        // ✅ ONLY WASD — NO ARROW KEYS
+        if (Input.GetKey(KeyCode.A)) x = -1f;
+        if (Input.GetKey(KeyCode.D)) x = 1f;
+        if (Input.GetKey(KeyCode.W)) z = 1f;
+        if (Input.GetKey(KeyCode.S)) z = -1f;
 
-        if (hasMoveInput)
+        Vector3 camForward = cameraTransform.forward;
+        Vector3 camRight = cameraTransform.right;
+
+        camForward.y = 0f;
+        camRight.y = 0f;
+
+        camForward.Normalize();
+        camRight.Normalize();
+
+        Vector3 move = (camForward * z + camRight * x).normalized;
+
+        controller.Move(move * moveSpeed * Time.deltaTime);
+
+        if (move.sqrMagnitude > 0.001f)
         {
-            move.Normalize();
-            controller.Move(move * moveSpeed * Time.deltaTime);
+            Quaternion targetRot = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRot,
+                rotationSpeed * Time.deltaTime
+            );
+        }
 
+        // Jump
+        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
+        {
+            velocity.y = jumpForce;
+        }
+    }
+
+    void HandleGravity()
+    {
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+    }
+
+    void UpdateAnimator()
+    {
+        animator.SetFloat(
+            "Speed",
+            controller.velocity.magnitude > 0.1f ? 1f : 0f
+        );
+
+        animator.SetBool("IsGrounded", isGrounded);
+    }
+}
+*/
+
+using UnityEngine;
+
+[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Animator))]
+public class PlayerMovement : MonoBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 6f;
+    public float gravity = -25f;
+    public float rotationSpeed = 12f;
+
+    [Header("References")]
+    public Transform cameraTransform;
+
+    CharacterController controller;
+    Animator animator;
+
+    Vector3 velocity;
+    bool isGrounded;
+
+    // 🔑 NEW: drive animation from input, not controller.velocity
+    float currentMoveAmount;
+
+    void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        HandleGroundCheck();
+        HandleMovement();
+        HandleGravity();
+        UpdateAnimator();
+    }
+
+    void HandleGroundCheck()
+    {
+        isGrounded = controller.isGrounded;
+
+        if (isGrounded && velocity.y < 0f)
+            velocity.y = -2f;
+    }
+
+    void HandleMovement()
+    {
+        float x = 0f;
+        float z = 0f;
+
+        // ✅ ONLY WASD
+        if (Input.GetKey(KeyCode.A)) x = -1f;
+        if (Input.GetKey(KeyCode.D)) x = 1f;
+        if (Input.GetKey(KeyCode.W)) z = 1f;
+        if (Input.GetKey(KeyCode.S)) z = -1f;
+
+        Vector3 camForward = cameraTransform.forward;
+        Vector3 camRight = cameraTransform.right;
+
+        camForward.y = 0f;
+        camRight.y = 0f;
+
+        camForward.Normalize();
+        camRight.Normalize();
+
+        Vector3 move = (camForward * z + camRight * x);
+
+        // 🔑 THIS FIXES RUN ANIMATION
+        currentMoveAmount = move.magnitude;
+
+        controller.Move(move * moveSpeed * Time.deltaTime);
+
+        if (move.sqrMagnitude > 0.001f)
+        {
             Quaternion targetRot = Quaternion.LookRotation(move);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
@@ -427,7 +548,7 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateAnimator()
     {
-        animator.SetFloat("Speed", hasMoveInput ? 1f : 0f);
+        animator.SetFloat("Speed", currentMoveAmount);
         animator.SetBool("IsGrounded", isGrounded);
     }
 }

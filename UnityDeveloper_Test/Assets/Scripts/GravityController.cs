@@ -223,24 +223,24 @@ public class GravityController : MonoBehaviour
     }
 }
 */
-
+/*
 using UnityEngine;
 
 public class GravityController : MonoBehaviour
 {
-    public PlayerMovement player;
+    [Header("References")]
+    public Transform player;
     public Transform hologram;
     public Transform cameraTransform;
 
     [Header("Hologram Settings")]
     public float hologramDistance = 2f;
     public float hologramHeightOffset = 1.2f;
-    public float hologramVisibleTime = 5f; // ✅ 5 seconds
+    public float hologramVisibleTime = 5f;
 
-    private Vector3 selectedGravity;
-    private bool hasSelection;
-
-    private float hologramTimer;
+    Vector3 selectedDirection;
+    bool hasSelection;
+    float hologramTimer;
 
     void Update()
     {
@@ -250,41 +250,37 @@ public class GravityController : MonoBehaviour
 
         if (hasSelection && Input.GetKeyDown(KeyCode.Return))
         {
-            ApplyGravity();
+            ConfirmGravitySelection();
         }
     }
 
     // -------------------------
-    // INPUT (ARROW KEYS ONLY)
+    // INPUT (ARROWS ONLY)
     // -------------------------
     void ReadArrowInput()
     {
-        Vector3 newSelection = Vector3.zero;
+        Vector3 dir = Vector3.zero;
 
         if (Input.GetKeyDown(KeyCode.LeftArrow))
-            newSelection = -cameraTransform.right;
-
+            dir = -cameraTransform.right;
         else if (Input.GetKeyDown(KeyCode.RightArrow))
-            newSelection = cameraTransform.right;
-
+            dir = cameraTransform.right;
         else if (Input.GetKeyDown(KeyCode.UpArrow))
-            newSelection = cameraTransform.forward;
-
+            dir = cameraTransform.forward;
         else if (Input.GetKeyDown(KeyCode.DownArrow))
-            newSelection = -cameraTransform.forward;
+            dir = -cameraTransform.forward;
 
-        if (newSelection != Vector3.zero)
-        {
-            newSelection.y = 0f;
-            selectedGravity = newSelection.normalized;
+        if (dir == Vector3.zero) return;
 
-            hasSelection = true;
-            hologramTimer = hologramVisibleTime; // ✅ reset timer
-        }
+        dir.y = 0f;
+        selectedDirection = dir.normalized;
+
+        hasSelection = true;
+        hologramTimer = hologramVisibleTime;
     }
 
     // -------------------------
-    // TIMER
+    // HOLOGRAM TIMER
     // -------------------------
     void UpdateHologramTimer()
     {
@@ -295,8 +291,7 @@ public class GravityController : MonoBehaviour
         if (hologramTimer <= 0f)
         {
             hasSelection = false;
-            if (hologram)
-                hologram.gameObject.SetActive(false);
+            if (hologram) hologram.gameObject.SetActive(false);
         }
     }
 
@@ -305,38 +300,192 @@ public class GravityController : MonoBehaviour
     // -------------------------
     void UpdateHologramVisual()
     {
-        if (!hologram || !hasSelection)
+        if (!hasSelection || !hologram)
         {
-            if (hologram)
-                hologram.gameObject.SetActive(false);
+            if (hologram) hologram.gameObject.SetActive(false);
             return;
         }
 
         hologram.gameObject.SetActive(true);
 
         hologram.position =
-            player.transform.position +
-            selectedGravity * hologramDistance +
+            player.position +
+            selectedDirection * hologramDistance +
             Vector3.up * hologramHeightOffset;
 
         hologram.rotation =
-            Quaternion.LookRotation(-selectedGravity, Vector3.up) *
+            Quaternion.LookRotation(-selectedDirection, Vector3.up) *
             Quaternion.Euler(90f, 0f, 0f);
     }
 
     // -------------------------
-    // APPLY GRAVITY
+    // CONFIRM (ENTER)
     // -------------------------
-    void ApplyGravity()
+    void ConfirmGravitySelection()
     {
-        if (!player) return;
-
-        //player.ApplyGravity(selectedGravity);
-
         hasSelection = false;
         hologramTimer = 0f;
 
         if (hologram)
             hologram.gameObject.SetActive(false);
+
+        // 🔑 World rotation will be called here in next step
+    }
+}
+
+*/
+
+using UnityEngine;
+using System.Collections;
+
+public class GravityController : MonoBehaviour
+{
+    [Header("References")]
+    public Transform worldRoot;
+    public Transform player;
+    public Transform hologram;
+    public Transform cameraTransform;
+
+    [Header("Hologram Settings")]
+    public float hologramDistance = 2f;
+    public float hologramHeightOffset = 1.2f;
+    public float hologramVisibleTime = 5f;
+
+    [Header("World Rotation")]
+    public float rotationDuration = 0.5f; // tweak in Inspector
+
+    Vector3 selectedDirection;
+    Vector3 rotationAxis;
+    float rotationAngle;
+
+    bool hasSelection;
+    bool isRotating;
+    float hologramTimer;
+
+    void Update()
+    {
+        if (isRotating) return;
+
+        ReadArrowInput();
+        UpdateHologramTimer();
+        UpdateHologramVisual();
+
+        if (hasSelection && Input.GetKeyDown(KeyCode.Return))
+        {
+            StartCoroutine(RotateWorld());
+        }
+    }
+
+    // -------------------------
+    // ARROW INPUT
+    // -------------------------
+    void ReadArrowInput()
+    {
+        Vector3 dir = Vector3.zero;
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            dir = -cameraTransform.right;
+            rotationAxis = Vector3.forward;
+            rotationAngle = 90f;
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            dir = cameraTransform.right;
+            rotationAxis = Vector3.forward;
+            rotationAngle = -90f;
+        }
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            dir = cameraTransform.forward;
+            rotationAxis = Vector3.right;
+            rotationAngle = 90f;
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            dir = -cameraTransform.forward;
+            rotationAxis = Vector3.right;
+            rotationAngle = -90f;
+        }
+
+        if (dir == Vector3.zero) return;
+
+        dir.y = 0f;
+        selectedDirection = dir.normalized;
+
+        hasSelection = true;
+        hologramTimer = hologramVisibleTime;
+    }
+
+    // -------------------------
+    // HOLOGRAM TIMER
+    // -------------------------
+    void UpdateHologramTimer()
+    {
+        if (!hasSelection) return;
+
+        hologramTimer -= Time.deltaTime;
+        if (hologramTimer <= 0f)
+        {
+            hasSelection = false;
+            if (hologram) hologram.gameObject.SetActive(false);
+        }
+    }
+
+    // -------------------------
+    // HOLOGRAM VISUAL
+    // -------------------------
+    void UpdateHologramVisual()
+    {
+        if (!hasSelection || !hologram)
+        {
+            if (hologram) hologram.gameObject.SetActive(false);
+            return;
+        }
+
+        hologram.gameObject.SetActive(true);
+
+        hologram.position =
+            player.position +
+            selectedDirection * hologramDistance +
+            Vector3.up * hologramHeightOffset;
+
+        hologram.rotation =
+            Quaternion.LookRotation(-selectedDirection, Vector3.up) *
+            Quaternion.Euler(90f, 0f, 0f);
+    }
+
+    // -------------------------
+    // WORLD ROTATION
+    // -------------------------
+    IEnumerator RotateWorld()
+    {
+        isRotating = true;
+        hasSelection = false;
+
+        if (hologram)
+            hologram.gameObject.SetActive(false);
+
+        float elapsed = 0f;
+        float rotated = 0f;
+
+        while (elapsed < rotationDuration)
+        {
+            float step = (rotationAngle / rotationDuration) * Time.deltaTime;
+            worldRoot.RotateAround(player.position, rotationAxis, step);
+
+            rotated += step;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // snap exact remaining angle
+        worldRoot.RotateAround(
+            player.position,
+            rotationAxis,
+            rotationAngle - rotated
+        );
+
+        isRotating = false;
     }
 }
