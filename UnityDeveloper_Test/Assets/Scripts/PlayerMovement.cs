@@ -483,11 +483,15 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.Instance || !GameManager.Instance.IsGameRunning)
+            return;
+
         HandleGroundCheck();
         HandleMovement();
         HandleGravity();
         UpdateAnimator();
     }
+
 
     void HandleGroundCheck()
     {
