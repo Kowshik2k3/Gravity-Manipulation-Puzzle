@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
+    [Header("Audio")]
+    public AudioSource backgroundMusic;
 
     [Header("Panels")]
     public GameObject startPanel;
@@ -50,6 +52,7 @@ public class GameManager : MonoBehaviour
         currentTime = gameTimeLimit;
 
         ShowStartPanel();
+
     }
 
     void Update()
@@ -63,6 +66,7 @@ public class GameManager : MonoBehaviour
         {
             LoseGame("Time’s up!");
         }
+
     }
 
     // -------------------------
@@ -81,6 +85,10 @@ public class GameManager : MonoBehaviour
         currentTime = gameTimeLimit;
         UpdateCollectableUI();
         UpdateTimerUI();
+        if (backgroundMusic && !backgroundMusic.isPlaying)
+        {
+            backgroundMusic.Play();
+        }
     }
 
     public void OnCollectablePicked()
@@ -101,6 +109,11 @@ public class GameManager : MonoBehaviour
 
     void WinGame()
     {
+        if (backgroundMusic && backgroundMusic.isPlaying)
+        {
+            backgroundMusic.Stop();
+        }
+
         gameRunning = false;
         gamePanel.SetActive(false);
         winPanel.SetActive(true);
@@ -121,6 +134,11 @@ public class GameManager : MonoBehaviour
 
     void LoseGame(string reason)
     {
+        if (backgroundMusic && backgroundMusic.isPlaying)
+        {
+            backgroundMusic.Stop();
+        }
+
         if (!gameRunning) return;
 
         gameRunning = false;
